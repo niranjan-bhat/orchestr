@@ -26,24 +26,24 @@ export default function About() {
   return (
     <section
       id="about"
-      className="relative py-20 scroll-mt-14"
+      className="relative scroll-mt-14 py-20"
       style={{ background: "var(--bg)" }}
     >
       <div className="mx-auto max-w-[1180px] px-6">
-        {/* Shared line wrapper ONLY for intro + timeline */}
         <div className="relative">
           {/* shared vertical line */}
           <div
             className="absolute top-0 bottom-0 hidden md:block"
             style={{
-              left: "44%",
+              left: "50%",
+              transform: "translateX(-50%)",
               width: "1px",
               background: "color-mix(in srgb, var(--border) 80%, transparent)",
             }}
           />
 
-          {/* top intro */}
-          <div className="grid grid-cols-1 gap-16 md:grid-cols-[0.8fr_1.2fr]">
+          {/* intro */}
+          <div className="grid grid-cols-1 gap-16 md:grid-cols-2">
             {/* LEFT */}
             <div className="md:pr-12">
               <p
@@ -62,7 +62,7 @@ export default function About() {
             </div>
 
             {/* RIGHT */}
-            <div className="max-w-2xl md:pl-16">
+            <div className="max-w-2xl md:pl-12">
               <div className="mb-10 flex flex-wrap gap-10">
                 <div>
                   <p
@@ -94,9 +94,9 @@ export default function About() {
                 style={{ color: "var(--text)" }}
               >
                 Over the last 10 years, I’ve worked across mobile, web, backend,
-                and platform layers to build systems used in day-to-day operations
-                — from field workflows and dispatch platforms to manufacturing
-                tools and internal software.
+                and platform layers to build systems used in day-to-day
+                operations — from field workflows and dispatch platforms to
+                manufacturing tools and internal software.
               </p>
 
               <p
@@ -127,33 +127,31 @@ export default function About() {
                 return (
                   <div
                     key={index}
-                    className="relative grid grid-cols-1 md:grid-cols-[0.8fr_1.2fr]"
+                    className="relative grid grid-cols-1 md:grid-cols-2"
                   >
                     {/* center dot */}
                     <div
-                      className="absolute top-8 hidden h-4 w-4 -translate-x-1/2 rounded-full border md:block"
+                      className="absolute top-8 hidden h-4 w-4 rounded-full border md:block"
                       style={{
-                        left: "44%",
+                        left: "50%",
+                        transform: "translateX(-50%)",
                         background: "var(--bg)",
                         borderColor:
                           "color-mix(in srgb, var(--border) 90%, transparent)",
                       }}
                     />
 
-                    {/* left side */}
-                    <div
-                      className={
-                        isLeft ? "md:pr-12" : "md:pr-12 md:invisible"
-                      }
-                    >
+                    {/* left column */}
+                    <div className="md:pr-10 flex md:justify-end">
                       {isLeft && (
                         <div
-                          className="rounded-2xl border px-6 py-5"
+                          className="w-full max-w-md rounded-2xl border px-6 py-5"
                           style={{
                             borderColor:
                               "color-mix(in srgb, var(--border) 85%, transparent)",
                             background:
-                              "color-mix(in srgb, var(--bg) 92%, transparent)",
+                              "color-mix(in srgb, var(--bg) 94%, transparent)",
+                            boxShadow: "0 12px 30px rgba(0,0,0,0.18)",
                           }}
                         >
                           <p
@@ -180,20 +178,17 @@ export default function About() {
                       )}
                     </div>
 
-                    {/* right side */}
-                    <div
-                      className={
-                        !isLeft ? "md:pl-16" : "md:pl-16 md:invisible"
-                      }
-                    >
+                    {/* right column */}
+                    <div className="md:pl-10 flex md:justify-start">
                       {!isLeft && (
                         <div
-                          className="rounded-2xl border px-6 py-5"
+                          className="w-full max-w-md rounded-2xl border px-6 py-5"
                           style={{
                             borderColor:
                               "color-mix(in srgb, var(--border) 85%, transparent)",
                             background:
-                              "color-mix(in srgb, var(--bg) 92%, transparent)",
+                              "color-mix(in srgb, var(--bg) 94%, transparent)",
+                            boxShadow: "0 12px 30px rgba(0,0,0,0.18)",
                           }}
                         >
                           <p
@@ -226,7 +221,7 @@ export default function About() {
           </div>
         </div>
 
-        {/* principles OUTSIDE the shared line wrapper */}
+        {/* principles */}
         <div className="mt-14">
           <p
             className="mb-10 text-sm tracking-[0.14em]"

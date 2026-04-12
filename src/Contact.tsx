@@ -42,7 +42,7 @@ export default function Contact() {
             className="mb-5 text-3xl font-semibold leading-[1.1] md:text-5xl"
             style={{ color: "var(--text-h)" }}
           >
-            Let's connect.
+            Let’s build something meaningful.
           </h2>
 
           <p

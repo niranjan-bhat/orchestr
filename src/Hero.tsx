@@ -1,6 +1,9 @@
 export default function Hero() {
   return (
-    <section id="hero" className="relative min-h-screen flex items-center pt-20">
+    <section
+      id="hero"
+      className="relative min-h-screen flex items-center pt-20"
+    >
       {/* Background gradient wash */}
       <div
         className="absolute inset-y-0 left-0 w-[52%] pointer-events-none z-10"
@@ -19,10 +22,13 @@ export default function Hero() {
         <div className="grid grid-cols-1 md:grid-cols-[1.15fr_0.85fr] items-center">
           <div className="relative max-w-xl">
             <div
-              className="pointer-events-none absolute -inset-x-10 -inset-y-8 rounded-[40px] blur-2xl"
+              className="pointer-events-none absolute -inset-x-12 -inset-y-10 rounded-[48px] blur-3xl"
               style={{
-                background:
-                  "radial-gradient(circle at 30% 40%, color-mix(in srgb, var(--bg) 88%, transparent) 0%, color-mix(in srgb, var(--bg) 72%, transparent) 42%, transparent 78%)",
+                background: `radial-gradient(
+                  circle at 30% 40%,
+                  color-mix(in srgb, var(--text-h) 10%, transparent),
+                  transparent 65%
+                )`,
               }}
             />
 
@@ -54,19 +60,26 @@ export default function Hero() {
               <div className="mt-2 flex flex-wrap gap-4">
                 <a
                   href="#systems"
-                  className="pointer-events-auto rounded-xl px-6 py-3 font-medium transition-opacity hover:opacity-80"
-                  style={{ background: "var(--text-h)", color: "var(--bg)", textDecoration: "none" }}
+                  className="pointer-events-auto rounded-xl px-6 py-3 font-medium transition-all duration-200 hover:translate-y-[-1px]"
+                  style={{
+                    background: "var(--text-h)",
+                    color: "var(--bg)",
+                    boxShadow:
+                      "0 8px 30px color-mix(in srgb, var(--text-h) 12%, transparent)",
+                  }}
                 >
                   View Systems
                 </a>
 
                 <a
                   href="#contact"
-                  className="pointer-events-auto rounded-xl px-6 py-3 font-medium transition-opacity hover:opacity-80"
+                  className="pointer-events-auto rounded-xl px-6 py-3 font-medium transition-all duration-200 hover:translate-y-[-1px]"
                   style={{
-                    border: "1px solid var(--border)",
+                    border:
+                      "1px solid color-mix(in srgb, var(--border) 80%, transparent)",
                     color: "var(--text-h)",
-                    textDecoration: "none",
+                    background:
+                      "color-mix(in srgb, var(--bg) 92%, transparent)",
                   }}
                 >
                   Contact Me
