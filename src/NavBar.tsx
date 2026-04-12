@@ -6,50 +6,73 @@ interface NavBarProps {
 }
 
 const NAV_LINKS = [
-  { label: "About",      href: "#about"      },
-  { label: "Experience", href: "#experience" },
-  { label: "Systems",    href: "#systems"    },
-  { label: "Contact",    href: "#contact"    },
+  { label: "About",   href: "#about"   },
+  { label: "Systems", href: "#systems" },
+  { label: "Contact", href: "#contact" },
 ]
 
 export default function NavBar({ dark, onToggleTheme }: NavBarProps) {
-  const [active, setActive] = useState("")
+  const [active, setActive] = useState(() => window.location.hash || "")
 
+  // Scroll to hash on initial load
   useEffect(() => {
-    const sections = NAV_LINKS.map(({ href }) =>
-      document.querySelector(href) as HTMLElement | null
-    ).filter(Boolean) as HTMLElement[]
+    const hash = window.location.hash
+    if (hash) {
+      const el = document.querySelector(hash)
+      if (el) el.scrollIntoView({ behavior: "smooth" })
+    }
+  }, [])
 
-    if (sections.length === 0) return
+  // Sync active section → URL hash as user scrolls
+  useEffect(() => {
+    const OFFSET = 112 // must exceed scroll-mt-24 (6rem @ 18px = 108px)
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            setActive(`#${entry.target.id}`)
-          }
+    const handleScroll = () => {
+      const scrollY = window.scrollY
+      const sections = NAV_LINKS.map(({ href }) =>
+        document.querySelector(href) as HTMLElement | null
+      ).filter(Boolean) as HTMLElement[]
+
+      // Near bottom of page — activate last section
+      const nearBottom =
+        scrollY + window.innerHeight >= document.documentElement.scrollHeight - 40
+      if (nearBottom && sections.length) {
+        const last = sections[sections.length - 1]
+        const hash = `#${last.id}`
+        setActive(hash)
+        history.replaceState(null, "", hash)
+        return
+      }
+
+      let current = ""
+      for (const section of sections) {
+        if (scrollY >= section.offsetTop - OFFSET) {
+          current = `#${section.id}`
         }
-      },
-      { threshold: 0.5 }
-    )
+      }
 
-    sections.forEach((el) => observer.observe(el))
-    return () => observer.disconnect()
+      setActive(current)
+      history.replaceState(null, "", current || window.location.pathname)
+    }
+
+    window.addEventListener("scroll", handleScroll, { passive: true })
+    handleScroll()
+    return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
   return (
     <div
       data-no-interact
-      className="absolute top-0 left-0 w-full z-30 backdrop-blur-sm border-b"
+      className="fixed top-0 left-0 w-full z-30 backdrop-blur-sm border-b"
       style={{
-        background: "color-mix(in srgb, var(--bg) 75%, transparent)",
+        background: "color-mix(in srgb, var(--bg) 50%, transparent)",
         borderColor: "var(--border)",
       }}
     >
       <div className="max-w-[1180px] mx-auto px-6 py-6 flex items-center justify-between">
 
         {/* LEFT — Brand + Name */}
-        <div className="flex items-center gap-3">
+        <a href="#hero" className="flex items-center gap-3" style={{ textDecoration: "none" }}>
           <span className="text-base font-semibold tracking-tight" style={{ color: "var(--accent)" }}>
             Orchestr
           </span>
@@ -57,7 +80,7 @@ export default function NavBar({ dark, onToggleTheme }: NavBarProps) {
           <span className="text-sm font-medium tracking-wide" style={{ color: "var(--text-h)" }}>
             Niranjan Bhat
           </span>
-        </div>
+        </a>
 
         {/* RIGHT — Nav + theme toggle */}
         <div className="flex items-center gap-8 text-sm">
