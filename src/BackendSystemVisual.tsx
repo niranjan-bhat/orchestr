@@ -43,11 +43,6 @@ export default function BackendSystemVisual() {
           <div className="rounded-xl border px-4 py-3 text-xs"
             style={{ borderColor: "var(--border)" }}
           >
-            SQL
-          </div>
-          <div className="rounded-xl border px-4 py-3 text-xs"
-            style={{ borderColor: "var(--border)" }}
-          >
             RavenDB
           </div>
         </div>
@@ -57,7 +52,7 @@ export default function BackendSystemVisual() {
           <div className="rounded-xl border px-4 py-3 text-xs"
             style={{ borderColor: "var(--border)" }}
           >
-            Storage / CI / Delivery
+            Azure DevOps · CI/CD
           </div>
         </div>
       </div>

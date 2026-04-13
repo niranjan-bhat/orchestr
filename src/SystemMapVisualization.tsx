@@ -1,11 +1,14 @@
 import { useEffect, useRef } from "react";
 
-const NUM_POINTS = 50;
+const isMobile = () => window.innerWidth < 768;
+
+const CONFIG = {
+  desktop: { NUM_POINTS: 32, MAX_DIST: 250, MAX_DIST_CURSOR: 320, CURSOR_LINK_COUNT: 6 },
+  mobile:  { NUM_POINTS: 18, MAX_DIST: 180, MAX_DIST_CURSOR: 0,   CURSOR_LINK_COUNT: 0 },
+};
+
 const POINT_RADIUS = 3;
 const SPEED = 0.2;
-const MAX_DIST = 250;
-const MAX_DIST_CURSOR = 320;
-const CURSOR_LINK_COUNT = 6;
 
 interface Point {
   x: number;
@@ -25,8 +28,8 @@ function randomVelocity(): number {
   return (Math.random() * 2 - 1) * SPEED;
 }
 
-function initPoints(width: number, height: number): Point[] {
-  return Array.from({ length: NUM_POINTS }, () => ({
+function initPoints(width: number, height: number, count: number): Point[] {
+  return Array.from({ length: count }, () => ({
     x: Math.random() * width,
     y: Math.random() * height,
     vx: randomVelocity(),
@@ -67,12 +70,13 @@ export default function SystemMapVisualization() {
     const resize = () => {
       const rect = canvas.getBoundingClientRect();
       const dpr = window.devicePixelRatio || 1;
+      const cfg = isMobile() ? CONFIG.mobile : CONFIG.desktop;
 
       canvas.width = rect.width * dpr;
       canvas.height = rect.height * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      pointsRef.current = initPoints(rect.width, rect.height);
+      pointsRef.current = initPoints(rect.width, rect.height, cfg.NUM_POINTS);
     };
 
     const updateMouseFromEvent = (e: MouseEvent) => {
@@ -159,7 +163,9 @@ export default function SystemMapVisualization() {
       const height = canvas.height / dpr;
       const { bg, point, line, cursor } = colorsRef.current;
       const points = pointsRef.current;
-      const mouse = mouseRef.current;
+      const cfg = isMobile() ? CONFIG.mobile : CONFIG.desktop;
+      // On mobile skip cursor interaction entirely
+      const mouse = cfg.MAX_DIST_CURSOR > 0 ? mouseRef.current : null;
       const now = performance.now();
       const breathRadius = POINT_RADIUS + Math.sin(now * 0.001) * 0.1;
 
@@ -172,7 +178,7 @@ export default function SystemMapVisualization() {
         const dx = p.x - mouse.x;
         const dy = p.y - mouse.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        return dist < MAX_DIST_CURSOR ? 1 - dist / MAX_DIST_CURSOR : 0;
+        return dist < cfg.MAX_DIST_CURSOR ? 1 - dist / cfg.MAX_DIST_CURSOR : 0;
       });
 
       // Update positions
@@ -184,13 +190,13 @@ export default function SystemMapVisualization() {
         p.y += p.vy;
 
         // Attraction toward cursor
-        if (mouse) {
+        if (mouse && cfg.MAX_DIST_CURSOR > 0) {
           const dx = mouse.x - p.x;
           const dy = mouse.y - p.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
 
-          if (dist < MAX_DIST_CURSOR && dist > 0.001) {
-            const strength = Math.pow(1 - dist / MAX_DIST_CURSOR, 1.5);
+          if (dist < cfg.MAX_DIST_CURSOR && dist > 0.001) {
+            const strength = Math.pow(1 - dist / cfg.MAX_DIST_CURSOR, 1.5);
             const attraction = 0.4 * strength;
             p.x += dx * attraction * 0.01;
             p.y += dy * attraction * 0.01;
@@ -198,13 +204,13 @@ export default function SystemMapVisualization() {
         }
 
         // Repel while clicking
-        if (clickingRef.current && mouse) {
+        if (clickingRef.current && mouse && cfg.MAX_DIST_CURSOR > 0) {
           const dx = p.x - mouse.x;
           const dy = p.y - mouse.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
 
-          if (dist < MAX_DIST_CURSOR && dist > 0.001) {
-            const force = Math.pow(1 - dist / MAX_DIST_CURSOR, 2) * 1.2;
+          if (dist < cfg.MAX_DIST_CURSOR && dist > 0.001) {
+            const force = Math.pow(1 - dist / cfg.MAX_DIST_CURSOR, 2) * 1.2;
             p.vx += (dx / dist) * force * 0.08;
             p.vy += (dy / dist) * force * 0.08;
           }
@@ -238,12 +244,12 @@ export default function SystemMapVisualization() {
           const dy = points[i].y - points[j].y;
           const dist = Math.sqrt(dx * dx + dy * dy);
 
-          if (dist < MAX_DIST) {
+          if (dist < cfg.MAX_DIST) {
             connected[i] = true;
             connected[j] = true;
 
             const hover = Math.max(hoverFactor[i], hoverFactor[j]);
-            const alpha = (1 - dist / MAX_DIST) * (0.22 + hover * 1.4);
+            const alpha = (1 - dist / cfg.MAX_DIST) * (0.22 + hover * 1.4);
 
             ctx.beginPath();
             ctx.moveTo(points[i].x, points[i].y);
@@ -285,8 +291,8 @@ export default function SystemMapVisualization() {
         }
       }
 
-      // Cursor links: only nearest few points
-      if (mouse) {
+      // Cursor links: only nearest few points (desktop only)
+      if (mouse && cfg.CURSOR_LINK_COUNT > 0) {
         const nearby = points
           .map((p) => {
             const dx = p.x - mouse.x;
@@ -296,12 +302,12 @@ export default function SystemMapVisualization() {
               dist: Math.sqrt(dx * dx + dy * dy),
             };
           })
-          .filter((item) => item.dist < MAX_DIST_CURSOR)
+          .filter((item) => item.dist < cfg.MAX_DIST_CURSOR)
           .sort((a, b) => a.dist - b.dist)
-          .slice(0, CURSOR_LINK_COUNT);
+          .slice(0, cfg.CURSOR_LINK_COUNT);
 
         nearby.forEach(({ p, dist }) => {
-          const alpha = 1 - dist / MAX_DIST_CURSOR;
+          const alpha = 1 - dist / cfg.MAX_DIST_CURSOR;
 
           ctx.beginPath();
           ctx.moveTo(mouse.x, mouse.y);
@@ -363,7 +369,7 @@ export default function SystemMapVisualization() {
     <canvas
       ref={canvasRef}
       className="absolute inset-0 h-full w-full"
-      style={{ display: "block" }}
+      style={{ display: "block", pointerEvents: "none", touchAction: "none" }}
     />
   );
 }

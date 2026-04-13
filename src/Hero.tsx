@@ -4,10 +4,11 @@ export default function Hero() {
       id="hero"
       className="relative min-h-screen flex items-center pt-20"
     >
-      {/* Background gradient wash */}
+      {/* Background gradient wash — desktop only, fades into the right visualization */}
       <div
-        className="absolute inset-y-0 left-0 w-[52%] pointer-events-none z-10"
+        className="absolute inset-y-0 left-0 hidden md:block pointer-events-none z-10"
         style={{
+          width: "52%",
           background: `linear-gradient(
             to right,
             color-mix(in srgb, var(--bg) 94%, transparent) 0%,
@@ -18,7 +19,7 @@ export default function Hero() {
       />
 
       {/* Content */}
-      <div className="relative z-20 mx-auto w-full max-w-[1180px] px-6 pointer-events-none">
+      <div className="relative z-20 mx-auto w-full max-w-[1180px] px-6">
         <div className="grid grid-cols-1 md:grid-cols-[1.15fr_0.85fr] items-center">
           <div className="relative max-w-xl">
             <div
@@ -41,8 +42,7 @@ export default function Hero() {
               </p>
 
               <h1
-                className="mb-6 text-4xl md:text-[56px] font-semibold leading-[1.1]"
-                style={{ color: "var(--text-h)" }}
+                className="heading-gradient mb-6 text-4xl md:text-[56px] font-semibold leading-[1.1]"
               >
                 Engineering systems that move the real world.
               </h1>
@@ -60,7 +60,7 @@ export default function Hero() {
               <div className="mt-2 flex flex-wrap gap-4">
                 <a
                   href="#systems"
-                  className="pointer-events-auto rounded-xl px-6 py-3 font-medium transition-all duration-200 hover:translate-y-[-1px]"
+                  className="btn-primary rounded-xl px-6 py-3 font-medium"
                   style={{
                     background: "var(--text-h)",
                     color: "var(--bg)",
@@ -73,7 +73,7 @@ export default function Hero() {
 
                 <a
                   href="#contact"
-                  className="pointer-events-auto rounded-xl px-6 py-3 font-medium transition-all duration-200 hover:translate-y-[-1px]"
+                  className="btn-secondary rounded-xl px-6 py-3 font-medium"
                   style={{
                     border:
                       "1px solid color-mix(in srgb, var(--border) 80%, transparent)",
@@ -90,6 +90,19 @@ export default function Hero() {
 
           <div />
         </div>
+      </div>
+
+      {/* Interaction hint — desktop/mouse only */}
+      <div
+        className="absolute bottom-8 right-8 z-20 hidden md:flex items-center gap-2 pointer-events-none"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ color: "var(--text)" }}>
+          <path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z" strokeDasharray="3 3" />
+          <circle cx="12" cy="12" r="2" fill="currentColor" />
+        </svg>
+        <span className="text-xs tracking-wide" style={{ color: "var(--text)", opacity: 0.6 }}>
+          move to attract · click to repel
+        </span>
       </div>
     </section>
   );

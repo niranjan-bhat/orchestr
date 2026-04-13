@@ -39,8 +39,7 @@ export default function Contact() {
           </p>
 
           <h2
-            className="mb-5 text-3xl font-semibold leading-[1.1] md:text-5xl"
-            style={{ color: "var(--text-h)" }}
+            className="heading-gradient mb-5 text-3xl font-semibold leading-[1.1] md:text-5xl"
           >
             Let’s build something meaningful.
           </h2>
@@ -59,7 +58,7 @@ export default function Contact() {
                 href={href}
                 target={label === "GitHub" ? "_blank" : undefined}
                 rel={label === "GitHub" ? "noopener noreferrer" : undefined}
-                className="flex items-center gap-4 rounded-2xl border px-6 py-4 transition-opacity hover:opacity-70"
+                className="card-hover flex items-center gap-4 rounded-2xl border px-6 py-4"
                 style={{
                   borderColor:
                     "color-mix(in srgb, var(--border) 85%, transparent)",
