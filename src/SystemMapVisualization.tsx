@@ -3,18 +3,35 @@ import { useEffect, useRef } from "react";
 const isMobile = () => window.innerWidth < 768;
 
 const CONFIG = {
-  desktop: { NUM_POINTS: 52, MAX_DIST: 250, MAX_DIST_CURSOR: 320, CURSOR_LINK_COUNT: 6 },
-  mobile:  { NUM_POINTS: 18, MAX_DIST: 180, MAX_DIST_CURSOR: 0,   CURSOR_LINK_COUNT: 0 },
+  desktop: {
+    NUM_POINTS: 52,
+    MAX_DIST: 250,
+    MAX_DIST_CURSOR: 320,
+    CURSOR_LINK_COUNT: 6,
+  },
+  mobile: {
+    NUM_POINTS: 18,
+    MAX_DIST: 180,
+    MAX_DIST_CURSOR: 0,
+    CURSOR_LINK_COUNT: 0,
+  },
 };
 
 const POINT_RADIUS = 3;
 const SPEED = 1.0;
+const REPULSE_LOCK_MS = 900;
+const ATTRACTION_FORCE = 0.018;
+const REPULSION_FORCE = 0.22;
+const MAX_SPEED = 1.8;
+const MAX_SPEED_REPEL = 3.2;
+const IDLE_WANDER = 0.04;
 
 interface Point {
   x: number;
   y: number;
   vx: number;
   vy: number;
+  repelUntil: number;
 }
 
 function hexAlpha(hex: string, alpha: number): string {
@@ -34,6 +51,7 @@ function initPoints(width: number, height: number, count: number): Point[] {
     y: Math.random() * height,
     vx: randomVelocity(),
     vy: randomVelocity(),
+    repelUntil: 0,
   }));
 }
 
@@ -198,22 +216,33 @@ export default function SystemMapVisualization() {
       // Update positions
       for (let i = 0; i < points.length; i++) {
         const p = points[i];
+        let nearCursor = false;
+        const isRepelling = now < p.repelUntil;
 
-        // Base drift
-        p.x += p.vx;
-        p.y += p.vy;
-
-        // Attraction toward cursor
         if (mouse && cfg.MAX_DIST_CURSOR > 0) {
-          const dx = mouse.x - p.x;
-          const dy = mouse.y - p.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
+          const dxToMouse = mouse.x - p.x;
+          const dyToMouse = mouse.y - p.y;
+          const distToMouse = Math.sqrt(
+            dxToMouse * dxToMouse + dyToMouse * dyToMouse,
+          );
 
-          if (dist < cfg.MAX_DIST_CURSOR && dist > 0.001) {
-            const strength = Math.pow(1 - dist / cfg.MAX_DIST_CURSOR, 1.5);
-            const attraction = 0.4 * strength;
-            p.x += dx * attraction * 0.01;
-            p.y += dy * attraction * 0.01;
+          if (distToMouse < cfg.MAX_DIST_CURSOR && distToMouse > 0.001) {
+            nearCursor = true;
+
+            // Attraction only if not in post-repel cooldown
+            if (!isRepelling && !clickingRef.current) {
+              const nx = dxToMouse / distToMouse;
+              const ny = dyToMouse / distToMouse;
+
+              const strength = Math.pow(
+                1 - distToMouse / cfg.MAX_DIST_CURSOR,
+                1.6,
+              );
+
+              // softer attraction near cursor center
+              p.vx += nx * ATTRACTION_FORCE * strength;
+              p.vy += ny * ATTRACTION_FORCE * strength;
+            }
           }
         }
 
@@ -224,25 +253,75 @@ export default function SystemMapVisualization() {
           const dist = Math.sqrt(dx * dx + dy * dy);
 
           if (dist < cfg.MAX_DIST_CURSOR && dist > 0.001) {
-            const force = Math.pow(1 - dist / cfg.MAX_DIST_CURSOR, 2) * 1.2;
-            p.vx += (dx / dist) * force * 0.08;
-            p.vy += (dy / dist) * force * 0.08;
+            const nx = dx / dist;
+            const ny = dy / dist;
+
+            const strength = Math.pow(1 - dist / cfg.MAX_DIST_CURSOR, 2);
+
+            p.vx += nx * REPULSION_FORCE * strength;
+            p.vy += ny * REPULSION_FORCE * strength;
+
+            // lock attraction for a while after repel
+            p.repelUntil = now + REPULSE_LOCK_MS;
           }
         }
 
-        // Gentle damping
-        p.vx *= 0.998;
-        p.vy *= 0.998;
+        // Damping
+        if (isRepelling) {
+          // keep outward travel longer
+          p.vx *= 0.992;
+          p.vy *= 0.992;
+        } else if (nearCursor) {
+          p.vx *= 0.985;
+          p.vy *= 0.985;
+        } else {
+          p.vx *= 0.995;
+          p.vy *= 0.995;
+        }
 
-        // Maintain slight motion — threshold and recovery scale with SPEED
-        if (Math.abs(p.vx) < SPEED * 0.1) p.vx += randomVelocity() * SPEED * 0.5;
-        if (Math.abs(p.vy) < SPEED * 0.1) p.vy += randomVelocity() * SPEED * 0.5;
+        // Idle wandering only when not near cursor and not in repel cooldown
+        if (!nearCursor && !isRepelling) {
+          const speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+
+          const MIN_CRUISE_SPEED = 0.65;
+          const WANDER_FORCE = 0.015;
+
+          // keep particles alive with a gentle random drift
+          p.vx += randomVelocity() * WANDER_FORCE;
+          p.vy += randomVelocity() * WANDER_FORCE;
+
+          // if speed drops too much, boost it back smoothly
+          if (speed < MIN_CRUISE_SPEED) {
+            if (speed > 0.001) {
+              const boost = (MIN_CRUISE_SPEED - speed) * 0.08;
+              p.vx += (p.vx / speed) * boost;
+              p.vy += (p.vy / speed) * boost;
+            } else {
+              p.vx = randomVelocity() * 0.8;
+              p.vy = randomVelocity() * 0.8;
+            }
+          }
+        }
+
+        // Speed cap
+        const speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+        const cap = isRepelling ? MAX_SPEED_REPEL : MAX_SPEED;
+
+        if (speed > cap) {
+          p.vx = (p.vx / speed) * cap;
+          p.vy = (p.vy / speed) * cap;
+        }
+
+        // Move after forces
+        p.x += p.vx;
+        p.y += p.vy;
 
         // Bounce off edges
         if (p.x < POINT_RADIUS || p.x > width - POINT_RADIUS) {
           p.vx *= -1;
           p.x = Math.max(POINT_RADIUS, Math.min(width - POINT_RADIUS, p.x));
         }
+
         if (p.y < POINT_RADIUS || p.y > height - POINT_RADIUS) {
           p.vy *= -1;
           p.y = Math.max(POINT_RADIUS, Math.min(height - POINT_RADIUS, p.y));
