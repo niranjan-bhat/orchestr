@@ -24,7 +24,6 @@ const ATTRACTION_FORCE = 0.018;
 const REPULSION_FORCE = 0.22;
 const MAX_SPEED = 1.8;
 const MAX_SPEED_REPEL = 3.2;
-const IDLE_WANDER = 0.04;
 
 interface Point {
   x: number;
