@@ -3,12 +3,12 @@ import { useEffect, useRef } from "react";
 const isMobile = () => window.innerWidth < 768;
 
 const CONFIG = {
-  desktop: { NUM_POINTS: 32, MAX_DIST: 250, MAX_DIST_CURSOR: 320, CURSOR_LINK_COUNT: 6 },
+  desktop: { NUM_POINTS: 52, MAX_DIST: 250, MAX_DIST_CURSOR: 320, CURSOR_LINK_COUNT: 6 },
   mobile:  { NUM_POINTS: 18, MAX_DIST: 180, MAX_DIST_CURSOR: 0,   CURSOR_LINK_COUNT: 0 },
 };
 
 const POINT_RADIUS = 3;
-const SPEED = 0.2;
+const SPEED = 1.0;
 
 interface Point {
   x: number;
@@ -67,6 +67,9 @@ export default function SystemMapVisualization() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    let lastWidth = 0;
+    let resizeTimer: ReturnType<typeof setTimeout>;
+
     const resize = () => {
       const rect = canvas.getBoundingClientRect();
       const dpr = window.devicePixelRatio || 1;
@@ -76,7 +79,17 @@ export default function SystemMapVisualization() {
       canvas.height = rect.height * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      pointsRef.current = initPoints(rect.width, rect.height, cfg.NUM_POINTS);
+      // Only reinitialize points on width change — mobile scrolling constantly
+      // triggers resize via browser chrome show/hide which changes only height
+      if (Math.abs(rect.width - lastWidth) > 10) {
+        lastWidth = rect.width;
+        pointsRef.current = initPoints(rect.width, rect.height, cfg.NUM_POINTS);
+      }
+    };
+
+    const debouncedResize = () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(resize, 150);
     };
 
     const updateMouseFromEvent = (e: MouseEvent) => {
@@ -141,6 +154,7 @@ export default function SystemMapVisualization() {
 
     readTheme();
     resize();
+    lastWidth = canvas.getBoundingClientRect().width;
 
     const darkMQ = window.matchMedia("(prefers-color-scheme: dark)");
     darkMQ.addEventListener("change", readTheme);
@@ -151,7 +165,7 @@ export default function SystemMapVisualization() {
       attributeFilter: ["data-theme"],
     });
 
-    window.addEventListener("resize", resize);
+    window.addEventListener("resize", debouncedResize);
     window.addEventListener("mousemove", onMouseMove);
     window.addEventListener("mouseleave", onMouseLeaveWindow);
     window.addEventListener("mousedown", onMouseDown);
@@ -217,12 +231,12 @@ export default function SystemMapVisualization() {
         }
 
         // Gentle damping
-        p.vx *= 0.995;
-        p.vy *= 0.995;
+        p.vx *= 0.998;
+        p.vy *= 0.998;
 
-        // Maintain slight motion
-        if (Math.abs(p.vx) < 0.03) p.vx += randomVelocity() * 0.2;
-        if (Math.abs(p.vy) < 0.03) p.vy += randomVelocity() * 0.2;
+        // Maintain slight motion — threshold and recovery scale with SPEED
+        if (Math.abs(p.vx) < SPEED * 0.1) p.vx += randomVelocity() * SPEED * 0.5;
+        if (Math.abs(p.vy) < SPEED * 0.1) p.vy += randomVelocity() * SPEED * 0.5;
 
         // Bounce off edges
         if (p.x < POINT_RADIUS || p.x > width - POINT_RADIUS) {
@@ -357,7 +371,8 @@ export default function SystemMapVisualization() {
       cancelAnimationFrame(rafRef.current);
       darkMQ.removeEventListener("change", readTheme);
       themeObserver.disconnect();
-      window.removeEventListener("resize", resize);
+      clearTimeout(resizeTimer);
+      window.removeEventListener("resize", debouncedResize);
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("mouseleave", onMouseLeaveWindow);
       window.removeEventListener("mousedown", onMouseDown);
